@@ -6,11 +6,7 @@ from .version import __version__
 def main(args):
     printer = Printer(bluetooth_address=args.bluetooth_address, channel=args.channel)
 
-    if args.print_charset:
-        printer.print_charset()
-    elif args.text:
-        printer.print_text(args.text)
-    elif args.image:
+    if args.image:
         printer.print_image(args.image)
 
     printer.close()
@@ -25,14 +21,7 @@ def cli():
         "-v", "--version", action="version", version="%(prog)s " + __version__
     )
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-t", "--text", type=str, help="Text to print")
-    group.add_argument(
-        "-p",
-        "--print_charset",
-        help="Print full character set and exit",
-        action="store_true",
-        default=False,
-    )
+    
     group.add_argument(
         "-i", "--image", type=str, help="Image file to print", required=False
     )

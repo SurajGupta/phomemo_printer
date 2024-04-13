@@ -1,7 +1,3 @@
-# Phomemo M02 Pro - 14 5-byte characters fit per line; each line is 40 bits high
-MAX_CHARS_PER_LINE = 14
-LINE_HEIGHT_BITS = 40
-
 # ESC
 ESC = b"\x1B"
 
