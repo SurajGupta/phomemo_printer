@@ -35,8 +35,6 @@ class Printer:
                 image_path (str): Path to an image file to print
         """
         image = Image.open(image_path)
-        if image.width > image.height:
-            image = image.transpose(Image.ROTATE_90)
 
         # width 384 dots
         IMAGE_WIDTH_BYTES = 70
