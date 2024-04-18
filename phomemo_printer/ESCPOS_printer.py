@@ -1,6 +1,7 @@
 import os, sys
 from .ESCPOS_constants import *
 import socket
+import time
 from PIL import Image
 
 
@@ -36,22 +37,29 @@ class Printer:
         """
         image = Image.open(image_path)
 
-        # width 384 dots
-        IMAGE_WIDTH_BYTES = 70
+        # width was determined empirically, using 80mm paper on a printer at 300 dpi
+        IMAGE_WIDTH_BYTES = 110
         IMAGE_WIDTH_BITS = IMAGE_WIDTH_BYTES * 8
         image = image.resize(
             size=(IMAGE_WIDTH_BITS, int(image.height * IMAGE_WIDTH_BITS / image.width))
         )
 
-        # black&white printer: dithering
+        # black & white printer: dithering
         image = image.convert(mode="1")
 
+        # Both sleeping and reducing the number of lines per block (from 256)
+        # seem to be necessary otherwise the printer stops printing prematurely.
+        SLEEP_BETWEEN_BLOCKS_IN_SECONDS = 0.5
+        LINES_PER_BLOCK = 64
+
         self._print_bytes(HEADER)
-        for start_index in range(0, image.height, 256):
+        for start_index in range(0, image.height, LINES_PER_BLOCK):
             end_index = (
-                start_index + 256 if image.height - 256 > start_index else image.height
+                start_index + LINES_PER_BLOCK if image.height - LINES_PER_BLOCK > start_index else image.height
             )
             line_height = end_index - start_index
+
+            time.sleep(SLEEP_BETWEEN_BLOCKS_IN_SECONDS)
 
             BLOCK_MARKER = (
                 GSV0
@@ -76,7 +84,7 @@ class Printer:
                         ):
                             byte |= 1 << (7 - bit)
                     # 0x0a breaks the rendering
-                    # 0x0a alone is processed like LineFeed by the printe
+                    # 0x0a alone is processed like LineFeed by the printer
                     if byte == 0x0A:
                         byte = 0x14
                     # self._print_bytes(byte.to_bytes(1, 'little'))
@@ -87,6 +95,10 @@ class Printer:
             for l in image_lines:
                 self._print_bytes(l)
 
+
+        time.sleep(SLEEP_BETWEEN_BLOCKS_IN_SECONDS)
         self._print_bytes(PRINT_FEED)
         self._print_bytes(PRINT_FEED)
+        time.sleep(SLEEP_BETWEEN_BLOCKS_IN_SECONDS)
         self._print_bytes(FOOTER)
+        time.sleep(SLEEP_BETWEEN_BLOCKS_IN_SECONDS)
